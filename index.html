@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Library - Discover Course Materials</title>
+    <link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="img/favicon-48x48.png" sizes="48x48" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div id="header-placeholder"></div>
+
+    <main>
+        <section id="hero" class="hero-section">
+            <div class="container">
+                <h1>Discover Educational Materials from <br> FUTA Departments</h1>
+                <p>Access a curated collection of free course materials, notes, and resources specifically for the Federal University of Technology Akure (FUTA).</p>
+                <a href="#departments" class="btn btn-primary-hero">Explore FUTA Departments</a>
+            </div>
+        </section>
+
+        <section id="search-tools" class="search-section" style="display: none;">
+            <div class="container">
+                <h2>Search Results</h2>
+                <div id="course-search-results" class="search-results">
+                    <p class="no-results" style="display: none;">No materials found matching your search criteria. Try a different search term.</p>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="departments" class="departments-section">
+            <div class="container">
+                <h2>Federal University of Technology Akure (FUTA) Departments</h2>
+                <div class="department-search-bar">
+                    <input type="text" id="department-search-input" placeholder="Search departments...">
+                </div>
+                <div class="department-grid">
+                    </div>
+                <button id="load-more-departments" class="btn btn-outline-departments">Load More Departments</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Scroll to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+<script src="js/scripts.js" type="module"></script>
+</body>
+</html>

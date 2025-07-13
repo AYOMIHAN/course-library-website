@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Course Materials - course Library</title>
+    <link rel="icon" href="img/favicon-48x48.png" sizes="48x48" type="image/png">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content">
+        <section class="materials-listing-section container">
+            <h1 class="section-title">All Course Materials</h1>
+
+            <div class="search-and-filters">
+                <input type="text" id="materials-search-input" placeholder="Search by title, ID, or department..." class="search-input">
+                <div class="material-filters">
+    <select id="department-filter" class="filter-select">
+        <option value="">All Departments</option>
+        </select>
+    <select id="level-filter" class="filter-select">
+        <option value="">All Levels</option>
+        <option value="100L">100 Level</option>
+        <option value="200L">200 Level</option>
+        <option value="300L">300 Level</option>
+        <option value="400L">400 Level</option>
+        <option value="500L">500 Level</option>
+    </select>
+    <select id="semester-filter" class="filter-select">
+        <option value="">All Semesters</option>
+        <option value="1st Semester">1st Semester</option> <option value="2nd Semester">2nd Semester</option> </select>
+</div>
+
+            <div id="materials-grid" class="materials-grid">
+                </div>
+
+            <p id="no-materials-found" class="no-results" style="display: none;">No materials found matching your criteria.</p>
+
+        </section>
+    </main>
+
+     <div id="footer-placeholder"></div>
+
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Scroll to top">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+    <div id="download-popup-overlay" class="download-popup-overlay">
+    <div class="download-popup-content">
+        <h3>Download Started!</h3>
+        <p>Your download should begin shortly. Happy reading!</p>
+        <p>Remember to share this website with your friends and colleagues!</p>
+        <button id="download-popup-close" class="btn btn-primary">Got it!</button>
+    </div>
+</div>
+<script src="js/scripts.js"></script>
+</body>
+</html>
