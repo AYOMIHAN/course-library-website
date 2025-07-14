@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'CHE401', title: 'Chemical Engineering Thermodynamics', department: 'Chemical Engineering', semester: '2nd Semester', level: '400L', downloadLink: 'materials/CHE401.pdf' },
     ];
 
+    // --- Past Questions Data (for past-questions.html) ---
     const pastQuestionsData = [
         { id: 'CSCE201', title: 'Introduction to Computer Science', department: 'Computer Science', semester: '1st Semester', level: '200L', year: 2022, downloadLink: 'past-questions/CSCE201_2022_1st_Sem.pdf' },
         { id: 'MATH101', title: 'General Mathematics I', department: 'Mathematics', semester: '1st Semester', level: '100L', year: 2021, downloadLink: 'past-questions/MATH101_2021_1st_Sem.pdf' },

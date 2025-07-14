@@ -11,6 +11,7 @@ const SUPABASE_PUBLIC_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 // 2️⃣  Name of the bucket where you upload PDFs (must be PUBLIC)
 const BUCKET = 'resources';
+//     ⚠️ Make sure this matches the bucket name in your Supabase project.
 
 // 3️⃣  List every department folder *exactly* as you create them in Supabase.
 //     ⚠️ Do NOT change the casing later – folder names are case‑sensitive.
