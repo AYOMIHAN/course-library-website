@@ -11,7 +11,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // ‑‑‑ CONFIG ‑‑‑ -----------------------------------------------------------------
 const supabaseUrl = 'https://ujzirkjogyiebbqqqsih.supabase.co';
 // Note: replace the key below with your own Supabase project's anon key
-const supabaseKey = '<eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqemlya2pvZ3lpZWJicXFxc2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MjI3MjksImV4cCI6MjA2Nzk5ODcyOX0.cqh9gOiu51F7pcyj1kl8SU9w4uAgllVnPKDziu2k1xQ';                             //  ← replace
+const supabaseKey = '<eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqemlya2pvZ3lpZWJicXFxc2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0NTY1NjYsImV4cCI6MjA2ODAzMjU2Nn0.klMILb_O5g0ZiH0DxMYZoYJIFLJnU8GUmk4I7A_lOhQ';                             //  ← replace
 const bucket      = 'resources';                                  //  public bucket
 const supabase    = createClient(supabaseUrl, supabaseKey);
 // ------------------------------------------------------------------------------
