@@ -1,91 +1,95 @@
-// supabaseMaterials.js  — v2 (2025‑07‑14)
+// supabaseMaterials.js — final stable version
 // -----------------------------------------------------------------------------
-// Re‑implements the Supabase fetcher with three fixes:
-//   1.  createClient declared before first use (avoids ReferenceError)
-//   2.  auto‑discovers departments (no hard‑coded list)
-//   3.  removes stray call to folderHasContent (now integrated directly)
+// 1. createClient FIRST, then everything runs *after* that inside an async init()
+// 2. exposes window.supabase for debugging, remove later if desired
+// 3. auto‑discovers departments and populates global arrays expected by scripts.js
 // -----------------------------------------------------------------------------
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-// ‑‑‑ CONFIG ‑‑‑ -----------------------------------------------------------------
+// === CONFIG ==================================================================
 const supabaseUrl = 'https://ujzirkjogyiebbqqqsih.supabase.co';
-window.supabase = supabase; // make it globally available for debugging
-// Note: replace the key below with your own Supabase project's anon key
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqemlya2pvZ3lpZWJicXFxc2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0NTY1NjYsImV4cCI6MjA2ODAzMjU2Nn0.klMILb_O5g0ZiH0DxMYZoYJIFLJnU8GUmk4I7A_lOhQ';                             //  ← replace
-const bucket      = 'resources';                                  //  public bucket
-const supabase    = createClient(supabaseUrl, supabaseKey);
-// ------------------------------------------------------------------------------
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqemlya2pvZ3lpZWJicXFxc2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0NTY1NjYsImV4cCI6MjA2ODAzMjU2Nn0.klMILb_O5g0ZiH0DxMYZoYJIFLJnU8GUmk4I7A_lOhQ';  // <<< REPLACE, keep on one line
+const bucket      = 'resources';
 
-// Helpers -----------------------------------------------------------------------
-function titleFromFileName(name) {
-  return name
-    .replace(/\.[^.]+$/, '')    // strip extension
-    .replace(/^[A-Za-z]{3,}[0-9]{3,}-/, '') // drop leading course‑code prefix if present
-    .replace(/-/g, ' ')          // dashes → spaces
-    .replace(/\b\w/g, c => c.toUpperCase()); // capitalise words
-}
+// === CLIENT (must exist before any use) ======================================
+const supabase = createClient(supabaseUrl, supabaseKey);
+window.supabase = supabase;  // comment out when done debugging
 
-function courseCodeFromFileName(name) {
-  const match = /^[A-Za-z]{2,}[0-9]{3,}/.exec(name);
-  return match ? match[0].toUpperCase() : '';
-}
-
-// Fetch all top‑level folders (departments) -------------------------------------
-async function listDepartments() {
-  const { data, error } = await supabase.storage.from(bucket).list('', { limit: 1000 });
-  if (error) throw error;
-  return data.filter(i => i.name && i.metadata?.eTag === undefined).map(i => i.name);
-}
-
-// Fetch materials for a single department ---------------------------------------
-async function listMaterialsForDept(dept) {
-  const { data, error } = await supabase.storage.from(bucket).list(`${dept}`, { limit: 200, depth: 3 });
-  if (error) throw error;
-
-  const materials = [];
-  for (const item of data) {
-    if (item.metadata?.eTag) {                  // it is a file, not folder
-      const publicUrl = supabase.storage.from(bucket).getPublicUrl(`${dept}/${item.name}`).data.publicUrl;
-      const parts = item.name.split('/');       // e.g. 100/1/COURSE101-intro.pdf
-      if (parts.length < 3) continue;           // need level/semester/file
-      const [ level, semester, filename ] = parts;
-
-      materials.push({
-        department : dept,
-        level,
-        semester,
-        courseCode : courseCodeFromFileName(filename),
-        title      : titleFromFileName(filename),
-        url        : publicUrl + '?download'
-      });
-    }
-  }
-  return materials;
-}
-
-// Initialise --------------------------------------------------------------------
-(async function initSupabaseMaterials() {
+// === MAIN ====================================================================
+(async function initMaterials () {
   try {
-    const departments  = await listDepartments();
-    const allMaterials = [];
+    // 1. List ALL top‑level folders (departments)
+    const { data: rootFolders, error: listErr } = await supabase
+      .storage
+      .from(bucket)
+      .list('', { limit: 1000 });
 
-    // Collect materials per department
-    for (const dept of departments) {
-      const items = await listMaterialsForDept(dept);
-      allMaterials.push(...items);
+    if (listErr) throw listErr;
+    if (!rootFolders.length) {
+      console.warn('[Supabase] No folders found in bucket');
+      return;
     }
 
-    // Update global arrays for legacy scripts.js
-    window.courseMaterials      = allMaterials;                // full list
-    window.allDepartmentsData   = departments.map(d => ({ name: d }));
+    // Filter to folder objects only (skip files in root if any)
+    const departments = rootFolders
+      .filter(obj => obj.id === undefined && obj.name)  // name present, no id => folder
+      .map(obj => obj.name);
 
-    // Render pages if functions exist
-    if (typeof window.populateFilterOptions === 'function') window.populateFilterOptions();
-    if (typeof window.renderHome            === 'function') window.renderHome();
-    if (typeof window.renderLibrary         === 'function') window.renderLibrary();
+    // 2. Build array of material objects
+    const materials = [];
 
-  } catch (err) {
-    console.error('Supabase integration failed:', err);
+    for (const dept of departments) {
+      // Depth‑first: level/semester folders
+      const { data: levelFolders } = await supabase
+        .storage
+        .from(bucket)
+        .list(`${dept}`, { limit: 20 });
+
+      for (const lvl of levelFolders.filter(f => f.name)) {
+        const { data: semFolders } = await supabase
+          .storage
+          .from(bucket)
+          .list(`${dept}/${lvl.name}`, { limit: 10 });
+
+        for (const sem of semFolders.filter(f => f.name)) {
+          const { data: files } = await supabase
+            .storage
+            .from(bucket)
+            .list(`${dept}/${lvl.name}/${sem.name}`, { limit: 5000 });
+
+          for (const file of files.filter(f => f.name.endsWith('.pdf'))) {
+            const path = `${dept}/${lvl.name}/${sem.name}/${file.name}`;
+            const { data: urlObj } = supabase
+              .storage
+              .from(bucket)
+              .getPublicUrl(path);
+
+            const [courseCode, ...titleParts] = file.name.replace('.pdf','').split('-');
+            materials.push({
+              department : dept,
+              level      : lvl.name,
+              semester   : sem.name,
+              courseCode,
+              title      : titleParts.join(' ').replace(/-/g,' '),
+              url        : urlObj.publicUrl + '?download'
+            });
+          }
+        }
+      }
+    }
+
+    // 3. Overwrite globals for scripts.js
+    window.courseMaterials    = materials;
+    window.allDepartmentsData = departments.map(d => ({ name: d }));
+
+    console.log(`[Supabase] Loaded ${materials.length} materials across ${departments.length} departments`);
+
+    // 4. Fire render functions if present
+    if (window.renderHome)    window.renderHome();
+    if (window.renderLibrary) window.renderLibrary();
+  }
+  catch (err) {
+    console.error('[Supabase] integration failed:', err);
   }
 })();
