@@ -5,50 +5,23 @@
 // departments/courses that actually have files are displayed.
 // -----------------------------------------------------------------------------
 
-// 1️⃣  Replace these two constants with **your** project credentials
-const SUPABASE_URL = 'https://ujzirkjogyiebbqqqsih.supabase.co';
-const SUPABASE_PUBLIC_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqemlya2pvZ3lpZWJicXFxc2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MjI3MjksImV4cCI6MjA2Nzk5ODcyOX0.cqh9gOiu51F7pcyj1kl8SU9w4uAgllVnPKDziu2k1xQ';
-
-// 2️⃣  Name of the bucket where you upload PDFs (must be PUBLIC)
-const BUCKET = 'resources';
-//     ⚠️ Make sure this matches the bucket name in your Supabase project.
-
-// 3️⃣  List every department folder *exactly* as you create them in Supabase.
-//     ⚠️ Do NOT change the casing later – folder names are case‑sensitive.
-//     If you want to drive the list entirely from Supabase later, you can
-//     query for prefixes, but keeping an explicit list means you still get
-//     nice icons & descriptions from scripts.js.
-// NEW: grab every top‑level folder automatically
-const { data: rootFolders } = await supabase
-  .storage
-  .from(bucket)
-  .list('', { limit: 1000 });
-
-const DEPARTMENTS = rootFolders
-  .filter(item => item.name && item.metadata?.eTag === undefined) // keep folders only
-  .map(item => item.name);                                        // ["Industrial Design", "Ceramics", ...]
-
-
-// -----------------------------------------------------------------------------
+/* 1️⃣  load Supabase SDK */
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLIC_ANON_KEY);
 
-/**
- * Returns true if the folder contains at least one object (file or subfolder).
- */
-async function folderHasContent(folder) {
-  const { data, error } = await supabase
-    .storage
-    .from(BUCKET)
-    .list(folder, { limit: 1 }); // only need to know if there is *something*
+/* 2️⃣  immediately create the client — MUST be before any use */
+const supabaseUrl = 'https://ujzirkjogyiebbqqqsih.supabase.co';
+const supabaseKey = '<eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqemlya2pvZ3lpZWJicXFxc2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MjI3MjksImV4cCI6MjA2Nzk5ODcyOX0.cqh9gOiu51F7pcyj1kl8SU9w4uAgllVnPKDziu2k1xQ>';
+const bucket      = 'resources';
+const supabase    = createClient(supabaseUrl, supabaseKey);
 
-  if (error) {
-    console.warn(`Supabase list error for ${folder}:`, error.message);
-    return false;
+/* 3️⃣  now it’s safe to use `supabase` */
+(async function init() {
+  try {
+    /* fetch folders / build materials … */
+  } catch (err) {
+    console.error('Supabase load failed:', err);
   }
-  return Array.isArray(data) && data.length > 0;
-}
-
+})();
 /**
  * Initialise the homepage: keeps only those department cards that have files.
  * Assumes scripts.js has already built the grid.
