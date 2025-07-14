@@ -18,24 +18,16 @@ const BUCKET = 'resources';
 //     If you want to drive the list entirely from Supabase later, you can
 //     query for prefixes, but keeping an explicit list means you still get
 //     nice icons & descriptions from scripts.js.
-const DEPARTMENTS = [
-  'Computer Science',
-  'Electrical and Electronics Engineering',
-  'Metallurgical and Materials Engineering',
-  'Architecture',
-  'Agricultural Engineering',
-  'Chemical Engineering',
-  'Mechanical Engineering',
-  'Civil Engineering',
-  'Applied Geophysics',
-  'Geology',
-  'Mathematics',
-  'Physics',
-  'Biology',
-  'Biochemistry',
-  'Urban and Regional Planning',
-  'Food Science and Technology'
-];
+// NEW: grab every top‑level folder automatically
+const { data: rootFolders } = await supabase
+  .storage
+  .from(bucket)
+  .list('', { limit: 1000 });
+
+const DEPARTMENTS = rootFolders
+  .filter(item => item.name && item.metadata?.eTag === undefined) // keep folders only
+  .map(item => item.name);                                        // ["Industrial Design", "Ceramics", ...]
+
 
 // -----------------------------------------------------------------------------
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
