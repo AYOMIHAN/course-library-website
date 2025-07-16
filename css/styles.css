@@ -11,7 +11,7 @@
     --shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); /* Tailwind-like small shadow */
     --shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Tailwind-like medium shadow */
     --shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.07); /* More pronounced shadow on hover */
-     --bg-card: #ffffff;       /* Background for cards/sections, usually white or light gray */
+    --bg-card: #ffffff;       /* Background for cards/sections, usually white or light gray */
 }
 
 * {
@@ -105,7 +105,7 @@ h3 {
 .btn-primary-hero:hover {
     background-color: var(--hover-blue);
     transform: translateY(-2px);
-    box-shadow: 0 12px 20px rgba(46, 129, 247, 0.3);
+    box-shadow: 0 12px 20px rgba(255, 255, 255, 0.3);
 }
 
 /* Department card 'View Materials' button */
@@ -142,8 +142,6 @@ h3 {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(46, 129, 247, 0.2);
 }
-
-
 
 /* --- Header --- */
 .main-header {
@@ -305,6 +303,31 @@ h3 {
 
     .nav-toggle {
         display: flex; /* Show the hamburger on mobile */
+    }
+    .main-nav ul {
+        list-style: none; /* Ensure no bullet points */
+        padding: 0;
+        width: 80%; /* Adjust as needed for content width */
+    }
+
+    .main-nav li {
+        margin: 15px 0; /* Spacing between links */
+    }
+
+    .main-nav a {
+        display: block;
+        padding: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: var(--text-dark); /* Adjust to your link color */
+        font-size: 1.5em; /* Adjust font size for mobile */
+        transition: background-color 0.2s ease;
+    }
+
+    .main-nav a:hover,
+    .main-nav a:focus {
+        background-color: var(--primary-blue-light); /* Highlight on hover/focus */
+        color: white;
     }
 }
 
@@ -764,7 +787,6 @@ body {
     }
 }
 
-
 /* Hero Section */
 .hero-section {
     background-color: var(--bg-main); /* Matches screenshot background */
@@ -863,7 +885,6 @@ body {
     margin-bottom: 24px; /* Space before button */
     flex-grow: 1; /* Ensures button is always at bottom */
 }
-
 
 /* --- Footer --- */
 .main-footer {
@@ -985,7 +1006,6 @@ body {
     text-decoration: none; /* No underline on hover */
 }
 
-
 /* Footer Bottom (Copyright, Powered by) */
 .footer-bottom {
     text-align: center;
@@ -1099,7 +1119,6 @@ body {
     transform: translateY(-4px); /* Noticeable lift */
     box-shadow: var(--shadow-card-hover);
 }
-
 
 /* --- Responsive Design --- */
 @media (max-width: 992px) {
@@ -1216,7 +1235,6 @@ body {
 }
 
 /* --- All Materials Page Styles --- */
-
 .materials-listing-section {
     padding: 60px 0;
 }
@@ -1390,7 +1408,7 @@ body {
     grid-column: 1 / -1; /* Make it span all columns in the grid */
 }
 
-    /* --- Past Questions Listing Section (similar to materials-listing-section) --- */
+/* --- Past Questions Listing Section (similar to materials-listing-section) --- */
 .past-questions-listing-section {
     padding: 80px 0; /* Consistent padding with other sections */
     background-color: var(--bg-main);
@@ -1514,38 +1532,30 @@ body {
     font-size: 0.95rem;
 }
 
-.btn-download {
-    display: inline-flex;
-    align-items: center;
+/* Update popup button styles */
+#popup-buttons {
+    display: flex;
+    gap: 15px;
     justify-content: center;
-    background-color: var(--primary-blue);
-    color: var(--bg-white);
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: background-color 0.2s ease;
-    text-decoration: none;
-    margin-top: auto; /* Pushes button to the bottom */
+    margin-top: 20px;
 }
 
-.btn-download i {
-    margin-right: 8px;
+/* Error state styling */
+.download-popup-content.error h3 {
+    color: #e74c3c; /* Red for errors */
 }
 
-.btn-download:hover {
-    background-color: var(--hover-blue);
+.download-popup-content.success h3 {
+    color: var(--primary-blue); /* Blue for success */
 }
 
-.no-results {
-    text-align: center;
-    color: var(--text-light);
-    padding: 40px 20px;
-    font-size: 1.1rem;
-    background-color: var(--bg-white);
-    border-radius: 12px;
-    margin-top: 40px;
-    box-shadow: var(--shadow-subtle);
+/* Make retry button more prominent */
+#download-popup-retry {
+    background-color: #e74c3c;
+}
+
+#download-popup-retry:hover {
+    background-color: #c0392b;
 }
 
 /* Responsive adjustments for past questions page (similar to materials) */
@@ -1609,12 +1619,12 @@ body {
 }
 
 .download-popup-content {
-    background-color: var(--bg-card); /* Use your defined card background */
-    color: var(--text-dark); /* Use your defined dark text color */
+    background-color: var(--bg-card);
+    color: var(--text-dark);
     padding: 40px 30px; /* Increased vertical padding for more spacious look */
     border-radius: 12px; /* Slightly more rounded corners */
     text-align: center;
-    box-shadow: 0 8px 25px var(--shadow-light); /* Stronger, defined shadow */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Stronger, defined shadow */
     transform: translateY(-20px) scale(0.95); /* Subtle scale animation */
     opacity: 0;
     transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smoother animation */
@@ -1630,7 +1640,7 @@ body {
 
 .download-popup-content h3 {
     margin-top: 0;
-    color: var(--primary-blue); /* Use your primary color for the heading */
+    color: var(--primary-blue);
     font-size: 2em; /* Slightly larger heading */
     margin-bottom: 15px;
     font-weight: 700; /* Make it bolder */
@@ -1644,7 +1654,7 @@ body {
 }
 
 .download-popup-content .popup-btn {
-    background-color: var(--primary-color);
+    background-color: var(--primary-blue);
     color: #fff;
     padding: 12px 30px; /* Larger button padding */
     border: none;
@@ -1657,7 +1667,7 @@ body {
 }
 
 .download-popup-content .popup-btn:hover {
-    background-color: var(--primary-dark); /* Darker shade for hover */
+    background-color: var(--hover-blue);
     transform: translateY(-2px); /* Subtle lift on hover */
 }
 
@@ -1734,4 +1744,5 @@ body {
     .main-footer p {
         font-size: 0.8rem;
     }
-} 
+}
+

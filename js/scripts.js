@@ -1,691 +1,667 @@
+// js/scripts.js
+
+// --- Supabase Imports ---
+import { initializeSupabase, getMaterialsFromSupabase, getSupabaseDownloadUrl } from './supabase.js';
+
+// --- Global Supabase Constants ---
+const SUPABASE_MATERIALS_TABLE = 'course_materials';
+const SUPABASE_PAST_QUESTIONS_TABLE = 'past_questions';
+const SUPABASE_STORAGE_BUCKET = 'materials';
+
+// --- Supabase Client Initialization ---
+let isSupabaseInitialized = initializeSupabase();
+
+if (!isSupabaseInitialized) {
+    console.error("Supabase client failed to initialize. Data will not load. Ensure your keys are correct in 'js/supabase.js'.");
+}
+
+
+
+
+
+
+// --- Access Gatekeeping (Basic JS Check) ---
+// This function checks if the user has "authenticated" via the login-check.js
+// It uses sessionStorage for simplicity; it's cleared when the session ends or browser closes.
+function checkAccessStatus() {
+    const ACCESS_GRANTED_FLAG = 'access_granted_idd235500';
+    const REQUIRED_MATRIC_NO = 'IDD/23/5500'; // Must match the one in login-check.js
+
+    // If the access flag is NOT set, or if it doesn't match our required matric, redirect to login
+    if (sessionStorage.getItem(ACCESS_GRANTED_FLAG) !== REQUIRED_MATRIC_NO) {
+        // Redirect to the login page
+        window.location.href = 'login.html';
+        return false; // Indicate that access was denied
+    }
+    return true; // Indicate that access was granted
+}
+
+// In your login-check.js, you need to set this flag on successful login:
+// AFTER line `window.location.href = 'all-materials.html';` in login-check.js
+// Add: sessionStorage.setItem('access_granted_idd235500', REQUIRED_MATRIC_NO);
+
+
+// --- Main Entry Point ---
 document.addEventListener('DOMContentLoaded', () => {
+    // !!! IMPORTANT: Perform the access check BEFORE loading any content !!!
+    if (!checkAccessStatus()) {
+        console.log("Access denied. Redirecting to login page.");
+        return; // Stop further execution of this script if access is denied
+    }
 
-    // --- Data (kept global for access by all functions) ---
-    const courseMaterials = [
-        { id: 'CSCE201', title: 'Introduction to Computer Science', department: 'Computer Science', semester: '1st Semester', level: '200L', downloadLink: 'materials/CSCE201.pdf' },
-        { id: 'MATH101', title: 'General Mathematics I', department: 'Mathematics', semester: '1st Semester', level: '100L', downloadLink: 'materials/MATH101.pdf' },
-        { id: 'EENG201', title: 'Basic Electrical Engineering I', department: 'Electrical and Electronics Engineering', semester: '1st Semester', level: '200L', downloadLink: 'materials/EENG201.pdf' },
-        { id: 'ARCH301', title: 'Architectural Design III', department: 'Architecture', semester: '2nd Semester', level: '300L', downloadLink: 'materials/ARCH301.pdf' },
-        { id: 'AGR202', title: 'Introduction to Agricultural Economics', department: 'Agricultural Engineering', semester: '2nd Semester', level: '200L', downloadLink: 'materials/AGR202.pdf' },
-        { id: 'GEOL101', title: 'Elements of Geology', department: 'Geology', semester: '1st Semester', level: '100L', downloadLink: 'materials/GEOL101.pdf' },
-        { id: 'PHYS102', 'title': 'General Physics II', department: 'Physics', semester: '2nd Semester', level: '100L', downloadLink: 'materials/PHYS102.pdf' },
-        { id: 'CYPE305', title: 'Cyber Security Principles', department: 'Computer Science', semester: '1st Semester', level: '300L', downloadLink: 'materials/CYPE305.pdf' },
-        { id: 'MECH203', title: 'Engineering Drawing', department: 'Mechanical Engineering', semester: '1st Semester', level: '200L', downloadLink: 'materials/MECH203.pdf' },
-        { id: 'URP401', title: 'Urban Planning Techniques', department: 'Urban and Regional Planning', semester: '2nd Semester', level: '400L', downloadLink: 'materials/URP401.pdf' },
-        { id: 'BIO101', title: 'General Biology I', department: 'Biology', semester: '1st Semester', level: '100L', downloadLink: 'materials/BIO101.pdf' },
-        { id: 'FST301', title: 'Food Chemistry', department: 'Food Science and Technology', semester: '1st Semester', level: '300L', downloadLink: 'materials/300L.pdf' },
-        { id: 'MET301', title: 'Introduction to Materials Science', department: 'Metallurgical and Materials Engineering', semester: '1st Semester', level: '300L', downloadLink: 'materials/MET301.pdf' },
-        { id: 'CHE401', title: 'Chemical Engineering Thermodynamics', department: 'Chemical Engineering', semester: '2nd Semester', level: '400L', downloadLink: 'materials/CHE401.pdf' },
-    ];
-
-    // --- Past Questions Data (for past-questions.html) ---
-    const pastQuestionsData = [
-        { id: 'CSCE201', title: 'Introduction to Computer Science', department: 'Computer Science', semester: '1st Semester', level: '200L', year: 2022, downloadLink: 'past-questions/CSCE201_2022_1st_Sem.pdf' },
-        { id: 'MATH101', title: 'General Mathematics I', department: 'Mathematics', semester: '1st Semester', level: '100L', year: 2021, downloadLink: 'past-questions/MATH101_2021_1st_Sem.pdf' },
-        { id: 'EENG201', title: 'Basic Electrical Engineering I', department: 'Electrical and Electronics Engineering', semester: '1st Semester', level: '200L', year: 2023, downloadLink: 'past-questions/EENG201_2023_1st_Sem.pdf' },
-        { id: 'ARCH301', title: 'Architectural Design III', department: 'Architecture', semester: '2nd Semester', level: '300L', year: 2022, downloadLink: 'past-questions/ARCH301_2022_2nd_Sem.pdf' },
-        { id: 'AGR202', title: 'Introduction to Agricultural Economics', department: 'Agricultural Engineering', semester: '2nd Semester', level: '200L', year: 2021, downloadLink: 'past-questions/AGR202_2021_2nd_Sem.pdf' },
-        { id: 'GEOL101', title: 'Elements of Geology', department: 'Geology', semester: '1st Semester', level: '100L', year: 2020, downloadLink: 'past-questions/GEOL101_2020_1st_Sem.pdf' },
-        { id: 'PHYS102', title: 'General Physics II', department: 'Physics', semester: '2nd Semester', level: '100L', year: 2023, downloadLink: 'past-questions/PHYS102_2023_2nd_Sem.pdf' },
-        { id: 'CYPE305', title: 'Cyber Security Principles', department: 'Computer Science', semester: '1st Semester', level: '300L', year: 2022, downloadLink: 'past-questions/CYPE305_2022_1st_Sem.pdf' },
-        { id: 'MECH203', title: 'Engineering Drawing', department: 'Mechanical Engineering', semester: '1st Semester', level: '200L', year: 2020, downloadLink: 'past-questions/MECH203_2020_1st_Sem.pdf' },
-        { id: 'URP401', title: 'Urban Planning Techniques', department: 'Urban and Regional Planning', semester: '2nd Semester', level: '400L', year: 2021, downloadLink: 'past-questions/URP401_2021_2nd_Sem.pdf' },
-        { id: 'BIO101', title: 'General Biology I', department: 'Biology', semester: '1st Semester', level: '100L', year: 2023, downloadLink: 'past-questions/BIO101_2023_1st_Sem.pdf' },
-        { id: 'FST301', title: 'Food Chemistry', department: 'Food Science and Technology', semester: '1st Semester', level: '300L', year: 2022, downloadLink: 'past-questions/FST301_2022_1st_Sem.pdf' },
-        { id: 'MET301', title: 'Introduction to Materials Science', department: 'Metallurgical and Materials Engineering', semester: '1st Semester', level: '300L', year: 2021, downloadLink: 'past-questions/MET301_2021_1st_Sem.pdf' },
-        { id: 'CHE401', title: 'Chemical Engineering Thermodynamics', department: 'Chemical Engineering', semester: '2nd Semester', level: '400L', year: 2020, downloadLink: 'past-questions/CHE401_2020_2nd_Sem.pdf' },
-        { id: 'CSCE201', title: 'Introduction to Computer Science', department: 'Computer Science', semester: '1st Semester', level: '200L', year: 2021, downloadLink: 'past-questions/CSCE201_2021_1st_Sem.pdf' },
-        { id: 'MATH101', title: 'General Mathematics I', department: 'Mathematics', semester: '1st Semester', level: '100L', year: 2020, downloadLink: 'past-questions/MATH101_2020_1st_Sem.pdf' },
-        { id: 'EENG201', title: 'Basic Electrical Engineering I', department: 'Electrical and Electronics Engineering', semester: '1st Semester', level: '200L', year: 2021, downloadLink: 'past-questions/EENG201_2021_1st_Sem.pdf' },
-        { id: 'ARCH301', title: 'Architectural Design III', department: 'Architecture', semester: '2nd Semester', level: '300L', year: 2020, downloadLink: 'past-questions/ARCH301_2020_2nd_Sem.pdf' },
-    ];
-    console.log('pastQuestionsData loaded:', pastQuestionsData.length, 'items');
-
-
-    const allDepartmentsData = [
-        { name: 'Computer Science', description: 'Innovating with code and algorithms.', icon: 'fas fa-laptop-code' },
-        { name: 'Electrical and Electronics Engineering', description: 'Shaping the future of energy and communication.', icon: 'fas fa-bolt' },
-        { name: 'Metallurgical and Materials Engineering', description: 'Understanding and developing advanced materials.', icon: 'fas fa-flask' },
-        { name: 'Architecture', description: 'Designing sustainable and innovative spaces.', icon: 'fas fa-city' },
-        { name: 'Agricultural Engineering', description: 'Innovating for sustainable agriculture.', icon: 'fas fa-tractor' },
-        { name: 'Chemical Engineering', description: 'Transforming raw materials into useful products.', icon: 'fas fa-industry' },
-        { name: 'Mechanical Engineering', description: 'Driving innovation in design and machinery.', icon: 'fas fa-cogs' },
-        { name: 'Civil Engineering', description: 'Building the infrastructure of tomorrow.', icon: 'fas fa-hard-hat' },
-        { name: 'Applied Geophysics', description: 'Exploring the Earth beneath our feet.', icon: 'fas fa-globe-americas' },
-        { name: 'Geology', description: 'Uncovering the secrets of Earth\'s history.', icon: 'fas fa-mountain' },
-        { name: 'Mathematics', description: 'The foundation of all sciences and engineering.', icon: 'fas fa-calculator' },
-        { name: 'Physics', description: 'Understanding the fundamental laws of the universe.', icon: 'fas fa-atom' },
-        { name: 'Biology', description: 'Studying life in all its forms.', icon: 'fas fa-dna' },
-        { name: 'Biochemistry', description: 'Exploring the chemistry of living organisms.', icon: 'fas fa-microscope' },
-        { name: 'Urban and Regional Planning', description: 'Designing functional and sustainable communities.', icon: 'fas fa-map-marked-alt' },
-        { name: 'Food Science and Technology', description: 'Innovating in food production and safety.', icon: 'fas fa-apple-alt' },
-    ];
-
-    // --- Core Initialization Function (to be called after partials are loaded) ---
-    // This function sets up all event listeners and dynamic content that exist on all pages.
-    const initializePageFeatures = () => {
-        // --- Mobile Navigation Toggle ---
-        const navToggle = document.querySelector('.nav-toggle'); // Corrected selector
-        const mainNav = document.querySelector('.main-nav');
-
-        if (navToggle && mainNav) {
-            if (!navToggle.dataset.hasClickListener) {
-                navToggle.addEventListener('click', () => {
-                    mainNav.classList.toggle('open');
-                    navToggle.classList.toggle('open');
-                });
-                navToggle.dataset.hasClickListener = 'true';
-            }
-
-            document.querySelectorAll('.main-nav a').forEach(link => {
-                if (!link.dataset.hasClickListener) {
-                    link.addEventListener('click', () => {
-                        if (mainNav.classList.contains('open')) {
-                            mainNav.classList.remove('open');
-                            navToggle.classList.remove('open');
-                        }
-                    });
-                    link.dataset.hasClickListener = 'true';
-                }
-            });
-        } else {
-            console.warn("Mobile navigation elements not found after partials load.");
-        }
-
-        // --- Dynamic Year in Footer ---
-        const currentYearSpan = document.getElementById('current-year-footer');
-        if (currentYearSpan) {
-            currentYearSpan.textContent = new Date().getFullYear();
-        } else {
-            console.warn("Footer year span element not found after partials load.");
-        }
-
-        // --- Scroll to Top Button ---
-        const scrollToTopBtn = document.getElementById('scroll-to-top');
-        if (scrollToTopBtn && !window.__scrollHandlerInitialized) {
-            const handleScroll = () => {
-                if (window.scrollY > 300) {
-                    scrollToTopBtn.classList.add('show');
-                } else {
-                    scrollToTopBtn.classList.remove('show');
-                }
-            };
-            window.addEventListener('scroll', handleScroll);
-            window.__scrollHandlerInitialized = true;
-
-            if (!scrollToTopBtn.dataset.hasClickListener) {
-                 scrollToTopBtn.addEventListener('click', () => {
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-                });
-                scrollToTopBtn.dataset.hasClickListener = 'true';
-            }
-        } else if (!scrollToTopBtn) {
-            console.warn("Scroll to top button not found after partials load.");
-        }
-
-        // --- Dynamic Header Hide/Show on Scroll ---
-        const mainHeader = document.querySelector('.main-header');
-        if (mainHeader && !window.__headerScrollHandlerInitialized) {
-            let lastScrollTop = 0;
-            const scrollThreshold = 100;
-
-            const handleHeaderScroll = () => {
-                let currentScroll = window.scrollY || document.documentElement.scrollTop;
-
-                if (currentScroll > scrollThreshold) {
-                    if (currentScroll > lastScrollTop) {
-                        if (!mainHeader.classList.contains('header-hidden')) {
-                            mainHeader.classList.add('header-hidden');
-                        }
-                    } else {
-                        if (mainHeader.classList.contains('header-hidden')) {
-                            mainHeader.classList.remove('header-hidden');
-                        }
-                    }
-                } else {
-                    if (mainHeader.classList.contains('header-hidden')) {
-                        mainHeader.classList.remove('header-hidden');
-                    }
-                }
-                lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
-            };
-
-            window.addEventListener('scroll', handleHeaderScroll, false);
-            window.__headerScrollHandlerInitialized = true;
-        } else if (!mainHeader) {
-            console.error("Error: '.main-header' element not found for scroll hide/show feature after partials load.");
-        }
-
-        // --- Set Active Navigation Link ---
+    // If access is granted, then proceed with loading partials and page setup
+    loadPartials().then(() => {
         const currentPath = window.location.pathname;
-        const currentHash = window.location.hash;
-        document.querySelectorAll('.main-nav a').forEach(link => {
-            link.classList.remove('active');
-            const linkHref = link.getAttribute('href');
 
-            if (currentPath.includes('all-materials.html') && linkHref.includes('all-materials.html')) {
-                link.classList.add('active');
-            } else if (currentPath.includes('past-questions.html') && linkHref.includes('past-questions.html')) {
-                link.classList.add('active');
-            } else if (currentPath.includes('about.html') && linkHref.includes('about.html')) {
-                link.classList.add('active');
-            } else if (currentPath.includes('contact.html') && linkHref.includes('contact.html')) {
-                link.classList.add('active');
-            } else if (currentPath.includes('index.html') || currentPath === '/') {
-                if (linkHref.includes('index.html')) {
-                    if (linkHref === 'index.html#hero' && (!currentHash || currentHash === '#hero')) {
-                        link.classList.add('active');
-                    } else if (currentHash && linkHref.includes(currentHash)) {
-                        link.classList.add('active');
-                    }
-                } else if (currentPath === '/' && link.dataset.navLink === 'home' && !currentHash) {
-                    link.classList.add('active');
-                }
+        setMainContentPadding();
+        setupHamburgerMenu();
+
+        if (currentPath.endsWith('/') || currentPath.endsWith('/index.html')) {
+            console.log('Running setupDepartmentsPage for index.html.');
+            setupDepartmentsPage();
+        } else if (currentPath.includes('all-materials.html')) {
+            console.log('Running setupMaterialsPage for all-materials.html.');
+            setupMaterialsPage();
+        } else if (currentPath.includes('past-questions.html')) {
+            console.log('Running setupPastQuestionsPage for past-questions.html.');
+            setupPastQuestionsPage();
+        } else if (currentPath.includes('contact.html')) {
+            console.log('Running setupContactPage for contact.html.');
+            setupContactPage();
+        }
+    }).catch(error => {
+        console.error("Failed to load partials or initialize page:", error);
+    });
+});
+
+
+
+
+
+
+// --- Common UI Elements and Functions ---
+
+// Dynamically set main content padding-top based on header height
+const setMainContentPadding = () => {
+    const mainHeader = document.querySelector('.main-header');
+    const mainContent = document.querySelector('main');
+    if (mainHeader && mainContent) {
+        const headerHeight = mainHeader.offsetHeight;
+        mainContent.style.paddingTop = `${headerHeight}px`;
+        console.log(`Main content padding set to ${headerHeight}px.`);
+    } else {
+        console.warn('Main header or main content element not found for padding adjustment.');
+    }
+};
+
+
+// --- Partial Loading Functions ---
+async function loadPartials() {
+    try {
+        const headerContainer = document.getElementById('header-placeholder');
+        if (headerContainer) {
+            const headerResponse = await fetch('partials/header.html');
+            if (headerResponse.ok) {
+                const headerHtml = await headerResponse.text();
+                headerContainer.innerHTML = headerHtml;
+                console.log('Header loaded successfully into #header-placeholder.');
+            } else {
+                console.error('Failed to load header.html:', headerResponse.status, headerResponse.statusText);
             }
+        } else {
+            console.warn('Header placeholder (#header-placeholder) not found in HTML. Header will not be loaded by JS.');
+        }
+
+        const footerContainer = document.getElementById('footer-placeholder');
+        if (footerContainer) {
+            const footerResponse = await fetch('partials/footer.html');
+            if (footerResponse.ok) {
+                const footerHtml = await footerResponse.text();
+                footerContainer.innerHTML = footerHtml;
+                console.log('Footer loaded successfully into #footer-placeholder.');
+            } else {
+                console.error('Failed to load footer.html:', footerResponse.status, footerResponse.statusText);
+            }
+        } else {
+            console.warn('Footer placeholder (#footer-placeholder) not found in HTML. Footer will not be loaded by JS.');
+        }
+    } catch (error) {
+        console.error("An error occurred during partials loading:", error);
+    }
+}
+
+// --- Hamburger Menu Toggle Logic ---
+function setupHamburgerMenu() {
+    const navToggle = document.querySelector('.nav-toggle');
+    const navMenu = document.querySelector('.main-nav');
+
+    if (navToggle && navMenu) {
+        navToggle.addEventListener('click', () => {
+            navToggle.classList.toggle('open');
+            navMenu.classList.toggle('open');
         });
 
-        // --- Update Material Count Display in Footer (for course materials) ---
-        const materialCountDisplay = document.getElementById('material-count-display');
-        if (materialCountDisplay) {
-            materialCountDisplay.textContent = courseMaterials.length + pastQuestionsData.length;
-        }
-
-        // --- Dynamically set body padding-top based on header height ---
-        const body = document.body;
-        if (mainHeader && body) {
-            requestAnimationFrame(() => {
-                const headerHeight = mainHeader.offsetHeight;
-                body.style.paddingTop = `${headerHeight}px`;
-                console.log(`Set body padding-top to: ${headerHeight}px`);
+        navMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navToggle.classList.remove('open');
+                navMenu.classList.remove('open');
             });
+        });
+        console.log('Hamburger menu setup with .nav-toggle and toggling "open" class.');
+    } else {
+        console.warn('Hamburger menu elements not found. Make sure you have .nav-toggle and .main-nav in your header.html.');
+    }
+}
+
+// --- Download Popup Logic ---
+document.addEventListener('click', async (event) => {
+    const downloadButton = event.target.closest('.btn-download');
+    if (downloadButton) {
+        event.preventDefault();
+        
+        // Get popup elements
+        const popupOverlay = document.getElementById('download-popup-overlay');
+        const popupTitle = document.getElementById('popup-title');
+        const popupMessage = document.getElementById('popup-message');
+        const closeBtn = document.getElementById('download-popup-close');
+        const retryBtn = document.getElementById('download-popup-retry');
+        
+        if (downloadButton.classList.contains('disabled')) {
+            // Show error popup for disabled buttons
+            popupTitle.textContent = "Download Unavailable";
+            popupMessage.textContent = "This file cannot be downloaded due to an invalid file path.";
+            retryBtn.style.display = 'none';
+            popupOverlay.classList.add('show');
+            return;
         }
 
-        // --- Download Popup Logic (shared for all download buttons) ---
-        const downloadPopupOverlay = document.getElementById('download-popup-overlay');
-        const downloadPopupCloseBtn = document.getElementById('download-popup-close');
-
-        if (downloadPopupCloseBtn && downloadPopupOverlay) {
-            if (!downloadPopupCloseBtn.dataset.hasClickListener) {
-                downloadPopupCloseBtn.addEventListener('click', () => {
-                    downloadPopupOverlay.classList.remove('show');
-                });
-                downloadPopupCloseBtn.dataset.hasClickListener = 'true'; // Flag on overlay
-            }
-
-            // Delegated event listener for all download buttons
-            document.addEventListener('click', (event) => {
-                const downloadButton = event.target.closest('.btn-download'); // Get the actual button
-                if (downloadButton) {
-                    event.preventDefault(); // Prevent default link behavior to allow loader + popup
-
-                    const originalButtonText = downloadButton.innerHTML; // Store original content
-                    downloadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading...'; // Add spinner and text
-                    downloadButton.disabled = true; // Disable button to prevent multiple clicks
-                    downloadButton.classList.add('downloading'); // Add a class for styling
-
-                    // Trigger the download by creating a temporary link and clicking it
-                    const tempLink = document.createElement('a');
-                    tempLink.href = downloadButton.href;
-                    tempLink.download = downloadButton.download; // Ensure the 'download' attribute is used
-                    document.body.appendChild(tempLink);
-                    tempLink.click();
-                    document.body.removeChild(tempLink); // Clean up the temporary link
-
-                    if (downloadPopupOverlay) {
-                        downloadPopupOverlay.classList.add('show');
-                    }
-
-                    // Reset button state after a short delay (e.g., 3 seconds)
-                    setTimeout(() => {
-                        downloadButton.innerHTML = originalButtonText; // Restore original content
-                        downloadButton.disabled = false; // Re-enable button
-                        downloadButton.classList.remove('downloading'); // Remove the styling class
-                        downloadPopupOverlay.classList.remove('show'); // Hide popup if still visible
-                    }, 3000); // Adjust delay as needed
-                }
-            });
+        const filePath = downloadButton.dataset.filePath;
+        const filename = downloadButton.dataset.filename || 'download';
+        
+        if (!filePath || !filePath.includes('.')) {
+            // Show error popup for invalid paths
+            popupTitle.textContent = "Invalid File";
+            popupMessage.textContent = "The file path is invalid or missing.";
+            retryBtn.style.display = 'none';
+            popupOverlay.classList.add('show');
+            return;
         }
-    };
 
-
-    // --- Load Partials Function ---
-    const loadPartials = async () => {
-        const headerPlaceholder = document.getElementById('header-placeholder');
-        const footerPlaceholder = document.getElementById('footer-placeholder');
+        // Show loading state
+        const originalButtonHTML = downloadButton.innerHTML;
+        downloadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating URL...';
+        downloadButton.disabled = true;
+        downloadButton.classList.add('downloading');
 
         try {
-            if (headerPlaceholder) {
-                const headerResponse = await fetch('partials/header.html');
-                if (!headerResponse.ok) throw new Error(`HTTP error! status: ${headerResponse.status}`);
-                const headerHtml = await headerResponse.text();
-                headerPlaceholder.innerHTML = headerHtml;
-            }
-
-            if (footerPlaceholder) {
-                const footerResponse = await fetch('partials/footer.html');
-                if (!footerResponse.ok) throw new Error(`HTTP error! status: ${footerResponse.status}`);
-                const footerHtml = await footerResponse.text();
-                footerPlaceholder.innerHTML = footerHtml;
-            }
-
-            initializePageFeatures(); // Initialize features after partials are loaded
-
-        } catch (error) {
-            console.error('Error loading partials:', error);
-            if (headerPlaceholder) headerPlaceholder.innerHTML = '<header class="main-header" style="background-color:#eee; padding:20px;"><div class="container"><h1>Error Loading Header</h1></div></header>';
-            if (footerPlaceholder) footerPlaceholder.innerHTML = '<footer class="main-footer" style="background-color:#eee; padding:20px;"><div class="container"><p>Error Loading Footer</p></div></footer>';
-        }
-    };
-
-
-    // --- Homepage Specific Logic (only runs on index.html) ---
-    const initializeHomepage = () => {
-        const departmentGrid = document.querySelector('.department-grid');
-        const loadMoreDepartmentsBtn = document.getElementById('load-more-departments');
-        const departmentSearchInput = document.getElementById('department-search-input');
-
-        const initialDepartmentsCount = 6;
-        let departmentsCurrentlyDisplayed = 0;
-
-        const renderDepartmentCard = (dept) => {
-            if (!departmentGrid) return;
-            const departmentCard = document.createElement('div');
-            departmentCard.classList.add('department-card');
-            departmentCard.innerHTML = `
-                <div class="card-icon"><i class="${dept.icon}"></i></div>
-                <h3>${dept.name}</h3>
-                <p>${dept.description}</p>
-                <a href="all-materials.html?department=${encodeURIComponent(dept.name)}" class="btn btn-outline-departments">View Materials</a>
-            `;
-            departmentGrid.appendChild(departmentCard);
-        };
-
-        const loadDepartments = (count) => {
-            if (!departmentGrid) return;
-            const startIndex = departmentsCurrentlyDisplayed;
-            const endIndex = Math.min(startIndex + count, allDepartmentsData.length);
-
-            if (startIndex >= endIndex) {
-                if (loadMoreDepartmentsBtn) loadMoreDepartmentsBtn.style.display = 'none';
+            const downloadLink = await getSupabaseDownloadUrl(SUPABASE_STORAGE_BUCKET, filePath);
+            
+            if (!downloadLink) {
+                // Show error popup
+                popupTitle.textContent = "Download Failed";
+                popupMessage.textContent = "Could not generate download URL. Please try again.";
+                retryBtn.style.display = 'inline-block';
+                popupOverlay.classList.add('show');
                 return;
             }
 
-            for (let i = startIndex; i < endIndex; i++) {
-                renderDepartmentCard(allDepartmentsData[i]);
-            }
-            departmentsCurrentlyDisplayed = endIndex;
+            // Success case - attempt download
+            const tempLink = document.createElement('a');
+            tempLink.href = downloadLink;
+            tempLink.download = filename;
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            document.body.removeChild(tempLink);
 
-            if (departmentsCurrentlyDisplayed >= allDepartmentsData.length) {
-                if (loadMoreDepartmentsBtn) loadMoreDepartmentsBtn.style.display = 'none';
-            } else {
-                if (loadMoreDepartmentsBtn) loadMoreDepartmentsBtn.style.display = 'inline-flex';
-            }
-        };
+            // Show success popup
+            popupTitle.textContent = "Download Started";
+            popupMessage.textContent = "Your download should start shortly. If it doesn't, check your browser's download settings.";
+            retryBtn.style.display = 'none';
+            popupOverlay.classList.add('show');
 
-        if (departmentGrid) {
-            departmentGrid.innerHTML = '';
-            departmentsCurrentlyDisplayed = 0;
-            loadDepartments(initialDepartmentsCount);
+        } catch (error) {
+            console.error('Error generating download URL:', error);
+            // Show error popup
+            popupTitle.textContent = "Download Error";
+            popupMessage.textContent = `An error occurred: ${error.message}`;
+            retryBtn.style.display = 'inline-block';
+            popupOverlay.classList.add('show');
+        } finally {
+            setTimeout(() => {
+                downloadButton.innerHTML = originalButtonHTML;
+                downloadButton.disabled = false;
+                downloadButton.classList.remove('downloading');
+            }, 3000);
+        }
+    }
+});
+
+// Add retry button functionality
+const retryBtn = document.getElementById('download-popup-retry');
+if (retryBtn) {
+    retryBtn.addEventListener('click', () => {
+        document.getElementById('download-popup-overlay').classList.remove('show');
+        // You could add auto-retry logic here if needed
+    });
+
+    // Close popup when clicking close button
+document.getElementById('download-popup-close')?.addEventListener('click', () => {
+    document.getElementById('download-popup-overlay').classList.remove('show');
+});
+
+// Close popup when clicking outside content
+document.getElementById('download-popup-overlay')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('download-popup-overlay')) {
+        document.getElementById('download-popup-overlay').classList.remove('show');
+    }
+});
+}
+
+// --- Homepage Departments Logic ---
+async function setupDepartmentsPage() {
+    const departmentGrid = document.querySelector('.department-grid');
+    const loadingIndicator = document.getElementById('departments-loading-indicator');
+    const noDepartmentsFound = document.getElementById('no-departments-found');
+    const departmentSearchInput = document.getElementById('department-search-input');
+
+    if (!departmentGrid) {
+        console.warn('Department grid element not found for setupDepartmentsPage. This script expects an element with class "department-grid".');
+        return;
+    }
+
+    let allDepartments = [];
+
+    const renderDepartments = (departmentsToRender) => {
+        departmentGrid.innerHTML = '';
+        if (departmentsToRender.length > 0) {
+            departmentsToRender.forEach(departmentName => {
+                const departmentCard = document.createElement('div');
+                departmentCard.classList.add('department-card');
+                departmentCard.innerHTML = `
+                    <div class="card-icon"><i class="fas fa-book"></i></div>
+                    <h3>${departmentName}</h3>
+                    <p>Explore course materials and past questions for ${departmentName}.</p>
+                    <a href="all-materials.html?department=${encodeURIComponent(departmentName)}"
+                       class="btn btn-outline-departments">View Materials</a>
+                `;
+                departmentGrid.appendChild(departmentCard);
+            });
+            if (noDepartmentsFound) noDepartmentsFound.style.display = 'none';
         } else {
-            console.warn("'.department-grid' element not found on homepage. Department cards will not load.");
-        }
-
-        if (loadMoreDepartmentsBtn) {
-            if (!loadMoreDepartmentsBtn.dataset.hasClickListener) {
-                loadMoreDepartmentsBtn.addEventListener('click', () => {
-                    loadDepartments(6);
-                });
-                loadMoreDepartmentsBtn.dataset.hasClickListener = 'true';
-            }
-        }
-
-        if (departmentSearchInput) {
-            if (!departmentSearchInput.dataset.hasKeyListener) {
-                departmentSearchInput.addEventListener('keyup', () => {
-                    const query = departmentSearchInput.value.toLowerCase().trim();
-                    if (departmentGrid) departmentGrid.innerHTML = '';
-                    if (loadMoreDepartmentsBtn) loadMoreDepartmentsBtn.style.display = 'none';
-
-                    if (query === '') {
-                        departmentsCurrentlyDisplayed = 0;
-                        loadDepartments(initialDepartmentsCount);
-                        return;
-                    }
-
-                    const filteredDepartments = allDepartmentsData.filter(dept =>
-                        dept.name.toLowerCase().includes(query) ||
-                        dept.description.toLowerCase().includes(query)
-                    );
-
-                    if (filteredDepartments.length > 0) {
-                        if (departmentGrid) filteredDepartments.forEach(dept => renderDepartmentCard(dept));
-                    } else {
-                        if (departmentGrid) departmentGrid.innerHTML = '<p class="no-results" style="text-align: center; color: var(--text-light); padding: 20px;">No departments found matching your search.</p>';
-                    }
-                });
-                departmentSearchInput.dataset.hasKeyListener = 'true';
+            if (noDepartmentsFound) {
+                noDepartmentsFound.textContent = "No departments found matching your search.";
+                noDepartmentsFound.style.display = 'block';
             }
         }
     };
 
-    // --- Course Materials Listing Page Logic (only runs on all-materials.html) ---
-    const initializeAllMaterialsPage = () => {
-        const materialsGrid = document.getElementById('materials-grid');
-        const materialsSearchInput = document.getElementById('materials-search-input');
-        const noMaterialsFound = document.getElementById('no-materials-found');
-        const departmentFilterSelect = document.getElementById('department-filter');
-        const levelFilterSelect = document.getElementById('level-filter');
-        const semesterFilterSelect = document.getElementById('semester-filter');
+    const filterDepartments = () => {
+        const searchTerm = departmentSearchInput.value.toLowerCase().trim();
+        const filtered = allDepartments.filter(dept => dept.toLowerCase().includes(searchTerm));
+        renderDepartments(filtered);
+    };
 
-        const renderMaterialCard = (material) => {
-            if (!materialsGrid) return;
-            const materialCard = document.createElement('div');
-            materialCard.classList.add('material-card');
-            materialCard.innerHTML = `
-                <h3>${material.title} (${material.id})</h3>
-                <p>${material.department} Department</p>
-                <div class="material-meta">
-                    <span><i class="fas fa-layer-group"></i> ${material.level}</span>
-                    <span><i class="fas fa-calendar-alt"></i> ${material.semester}</span>
-                </div>
-                <a href="${material.downloadLink}" class="btn-download" download>
-                    <i class="fas fa-download"></i> Download
-                </a>
-            `;
-            materialsGrid.appendChild(materialCard);
-        };
+    try {
+        if (isSupabaseInitialized) {
+            if (loadingIndicator) loadingIndicator.style.display = 'block';
 
-        const populateDepartmentFilter = () => {
-            if (!departmentFilterSelect) return;
+            const allMaterials = await getMaterialsFromSupabase(SUPABASE_MATERIALS_TABLE);
+            console.log('Result from getMaterialsFromSupabase (departments page):', allMaterials);
 
-            const uniqueDepartments = [...new Set(courseMaterials.map(material => material.department))].sort();
-
-            while (departmentFilterSelect.options.length > 1) {
-                departmentFilterSelect.remove(1);
+            if (allMaterials && allMaterials.length > 0) {
+                const uniqueDepartments = [...new Set(allMaterials.map(material => material.department))].sort();
+                allDepartments = uniqueDepartments;
+                console.log('Unique departments from Supabase:', uniqueDepartments);
+                renderDepartments(allDepartments);
+            } else {
+                console.warn("Bucket is empty or failed to fetch materials.");
+                if (noDepartmentsFound) noDepartmentsFound.style.display = 'block';
+                if (noDepartmentsFound) noDepartmentsFound.textContent = "Bucket is empty or failed to fetch materials.";
             }
+        } else {
+            console.warn("Supabase not initialized for departments page. Please ensure keys are correct in 'js/supabase.js'.");
+            if (noDepartmentsFound) {
+                noDepartmentsFound.textContent = "Data not loaded: Supabase initialization failed. Check console for details.";
+                noDepartmentsFound.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error("Error setting up departments page:", error);
+        if (noDepartmentsFound) {
+            noDepartmentsFound.textContent = `An error occurred loading departments: ${error.message}`;
+            noDepartmentsFound.style.display = 'block';
+        }
+    } finally {
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+    }
 
+    if (departmentSearchInput) {
+        departmentSearchInput.addEventListener('keyup', filterDepartments);
+    }
+}
+
+// --- All Materials Listing Logic ---
+let allCourseMaterials = [];
+
+async function setupMaterialsPage() {
+    const materialsGrid = document.getElementById('materials-grid');
+    const materialsSearchInput = document.getElementById('materials-search-input');
+    const noMaterialsFound = document.getElementById('no-materials-found');
+    const departmentFilterSelect = document.getElementById('department-filter');
+    const levelFilterSelect = document.getElementById('level-filter');
+    const semesterFilterSelect = document.getElementById('semester-filter');
+    const loadingIndicator = document.getElementById('materials-loading-indicator');
+
+    if (!materialsGrid) return;
+
+    const populateDepartmentFilter = (materials) => {
+        if (!departmentFilterSelect) return;
+        const uniqueDepartments = [...new Set(materials.map(material => material.department))].sort();
+        while (departmentFilterSelect.options.length > 1) {
+            departmentFilterSelect.remove(1);
+        }
+        uniqueDepartments.forEach(dept => {
+            const option = document.createElement('option');
+            option.value = dept;
+            option.textContent = dept;
+            departmentFilterSelect.appendChild(option);
+        });
+    };
+
+    const renderMaterialCard = (material) => {
+        if (!materialsGrid) return;
+        const materialCard = document.createElement('div');
+        materialCard.classList.add('material-card');
+        const disabledClass = !material.download_path || !material.download_path.includes('.') ? 'disabled' : '';
+        materialCard.innerHTML = `
+            <h3>${material.title} (${material.course_code})</h3>
+            <p>${material.department} Department</p>
+            <div class="material-meta">
+                <span><i class="fas fa-layer-group"></i> ${material.level}</span>
+                <span><i class="fas fa-calendar-alt"></i> ${material.semester}</span>
+            </div>
+            <a href="#" class="btn-download ${disabledClass}" 
+               data-file-path="${material.download_path || ''}" 
+               data-filename="${material.id}_${material.title}.pdf"
+               ${disabledClass ? 'onclick="alert(\'Download unavailable: Invalid file path.\'); return false;"' : ''}>
+                <i class="fas fa-download"></i> Download
+            </a>
+        `;
+        materialsGrid.appendChild(materialCard);
+    };
+
+    const displayMaterials = () => {
+        if (!materialsGrid) return;
+        materialsGrid.innerHTML = '';
+        const searchTerm = materialsSearchInput ? materialsSearchInput.value.toLowerCase().trim() : '';
+        const selectedDepartment = departmentFilterSelect ? departmentFilterSelect.value : '';
+        const selectedLevel = levelFilterSelect ? levelFilterSelect.value : '';
+        const selectedSemester = semesterFilterSelect ? semesterFilterSelect.value : '';
+
+        const filteredMaterials = allCourseMaterials.filter(material => {
+            const matchesSearch = material.title.toLowerCase().includes(searchTerm) ||
+                                 material.course_code.toLowerCase().includes(searchTerm) ||
+                                 material.id.toLowerCase().includes(searchTerm) ||
+                                 material.department.toLowerCase().includes(searchTerm);
+            const matchesDepartment = selectedDepartment === '' || material.department === selectedDepartment;
+            const matchesLevel = selectedLevel === '' || material.level === selectedLevel;
+            const matchesSemester = selectedSemester === '' || (material.semester && material.semester.toLowerCase().trim() === selectedSemester.toLowerCase().trim());
+            return matchesSearch && matchesDepartment && matchesLevel && matchesSemester;
+        });
+
+        if (filteredMaterials.length > 0) {
+            filteredMaterials.forEach(renderMaterialCard);
+            if (noMaterialsFound) noMaterialsFound.style.display = 'none';
+        } else {
+            if (noMaterialsFound) noMaterialsFound.style.display = 'block';
+        }
+    };
+
+    try {
+        if (isSupabaseInitialized) {
+            if (loadingIndicator) loadingIndicator.style.display = 'block';
+            const fetchedMaterials = await getMaterialsFromSupabase(SUPABASE_MATERIALS_TABLE);
+            console.log('Fetched materials:', fetchedMaterials);
+            if (fetchedMaterials && fetchedMaterials.length > 0) {
+                fetchedMaterials.forEach((material, index) => {
+                    console.log(`Material ${index + 1}:`, {
+                        id: material.id,
+                        title: material.title,
+                        download_path: material.download_path
+                    });
+                });
+                allCourseMaterials = fetchedMaterials.map(material => ({
+                    ...material,
+                    download_path: material.download_path || ''
+                }));
+                console.log('Processed course materials:', allCourseMaterials);
+            } else {
+                console.warn("No materials found in Supabase or failed to fetch.");
+                allCourseMaterials = [];
+                if (noMaterialsFound) {
+                    noMaterialsFound.textContent = "No materials found from Supabase. Check your table and RLS policies.";
+                    noMaterialsFound.style.display = 'block';
+                }
+            }
+        } else {
+            console.warn("Supabase not initialized for materials page. Please ensure keys are correct.");
+            allCourseMaterials = [];
+            if (noMaterialsFound) {
+                noMaterialsFound.textContent = "Data not loaded: Supabase initialization failed. Check console for details.";
+                noMaterialsFound.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error("Error setting up materials page:", error);
+        allCourseMaterials = [];
+        if (noMaterialsFound) {
+            noMaterialsFound.textContent = "An error occurred loading materials.";
+            noMaterialsFound.style.display = 'block';
+        }
+    } finally {
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+    }
+
+    populateDepartmentFilter(allCourseMaterials);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialDepartment = urlParams.get('department');
+    if (initialDepartment && departmentFilterSelect) {
+        departmentFilterSelect.value = initialDepartment;
+    }
+
+    if (materialsSearchInput) materialsSearchInput.addEventListener('keyup', displayMaterials);
+    if (departmentFilterSelect) departmentFilterSelect.addEventListener('change', displayMaterials);
+    if (levelFilterSelect) levelFilterSelect.addEventListener('change', displayMaterials);
+    if (semesterFilterSelect) semesterFilterSelect.addEventListener('change', displayMaterials);
+
+    displayMaterials();
+}
+
+// --- Past Questions Listing Logic ---
+let allPastQuestions = [];
+
+async function setupPastQuestionsPage() {
+    const pastQuestionsGrid = document.getElementById('past-questions-grid');
+    const pqSearchInput = document.getElementById('past-questions-search-input');
+    const noPastQuestionsFound = document.getElementById('no-past-questions-found');
+    const pqDepartmentFilter = document.getElementById('pq-department-filter');
+    const pqLevelFilter = document.getElementById('pq-level-filter');
+    const pqSemesterFilter = document.getElementById('pq-semester-filter');
+    const pqYearFilter = document.getElementById('pq-year-filter');
+    const loadingIndicator = document.getElementById('past-questions-loading-indicator');
+
+    if (!pastQuestionsGrid) return;
+
+    const populateFilters = (materials) => {
+        const uniqueDepartments = [...new Set(materials.map(m => m.department))].sort();
+        const uniqueYears = [...new Set(materials.map(m => m.year))].sort((a, b) => b - a);
+        
+        if (pqDepartmentFilter) {
+            while (pqDepartmentFilter.options.length > 1) pqDepartmentFilter.remove(1);
             uniqueDepartments.forEach(dept => {
                 const option = document.createElement('option');
                 option.value = dept;
                 option.textContent = dept;
-                departmentFilterSelect.appendChild(option);
+                pqDepartmentFilter.appendChild(option);
             });
-        };
-
-        const displayMaterials = () => {
-            if (!materialsGrid) return;
-
-            materialsGrid.innerHTML = '';
-            const searchTerm = materialsSearchInput ? materialsSearchInput.value.toLowerCase().trim() : '';
-            const selectedDepartment = departmentFilterSelect ? departmentFilterSelect.value : '';
-            const selectedLevel = levelFilterSelect ? levelFilterSelect.value : '';
-            const selectedSemester = semesterFilterSelect ? semesterFilterSelect.value : '';
-
-            const filteredMaterials = courseMaterials.filter(material => {
-                const matchesSearch = material.title.toLowerCase().includes(searchTerm) ||
-                                      material.id.toLowerCase().includes(searchTerm) ||
-                                      material.department.toLowerCase().includes(searchTerm);
-
-                const matchesDepartment = selectedDepartment === '' || material.department === selectedDepartment;
-                const matchesLevel = selectedLevel === '' || material.level === selectedLevel;
-                const matchesSemester = selectedSemester === '' || material.semester === selectedSemester;
-
-                return matchesSearch && matchesDepartment && matchesLevel && matchesSemester;
+        }
+        if (pqYearFilter) {
+            while (pqYearFilter.options.length > 1) pqYearFilter.remove(1);
+            uniqueYears.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                pqYearFilter.appendChild(option);
             });
+        }
+    };
 
-            if (filteredMaterials.length > 0) {
-                filteredMaterials.forEach(renderMaterialCard);
-                if (noMaterialsFound) noMaterialsFound.style.display = 'none';
+    const renderPastQuestionCard = (pq) => {
+        if (!pastQuestionsGrid) return;
+        const pqCard = document.createElement('div');
+        pqCard.classList.add('past-question-card');
+        const disabledClass = !pq.download_path || !pq.download_path.includes('.') ? 'disabled' : '';
+        pqCard.innerHTML = `
+            <h3>${pq.title} (${pq.id})</h3>
+            <p>${pq.department} Department</p>
+            <div class="pq-meta">
+                <span><i class="fas fa-layer-group"></i> ${pq.level}</span>
+                <span><i class="fas fa-calendar-alt"></i> ${pq.semester}</span>
+                <span><i class="fas fa-hourglass-half"></i> ${pq.year || 'N/A'}</span>
+            </div>
+            <a href="#" class="btn-download ${disabledClass}" 
+               data-file-path="${pq.download_path || ''}" 
+               data-filename="${pq.id}_${pq.title}_PQ.pdf"
+               ${disabledClass ? 'onclick="alert(\'Download unavailable: Invalid file path.\'); return false;"' : ''}>
+                <i class="fas fa-download"></i> Download Past Question
+            </a>
+        `;
+        pastQuestionsGrid.appendChild(pqCard);
+    };
+
+    const displayPastQuestions = () => {
+        if (!pastQuestionsGrid) return;
+        pastQuestionsGrid.innerHTML = '';
+        const searchTerm = pqSearchInput ? pqSearchInput.value.toLowerCase().trim() : '';
+        const selectedDepartment = pqDepartmentFilter ? pqDepartmentFilter.value : '';
+        const selectedLevel = pqLevelFilter ? pqLevelFilter.value : '';
+        const selectedSemester = pqSemesterFilter ? pqSemesterFilter.value : '';
+        const selectedYear = pqYearFilter ? pqYearFilter.value : '';
+
+        const filteredPQs = allPastQuestions.filter(pq => {
+            const matchesSearch = pq.title.toLowerCase().includes(searchTerm) ||
+                                 (pq.course_code && pq.course_code.toLowerCase().includes(searchTerm)) ||
+                                 pq.id.toLowerCase().includes(searchTerm) ||
+                                 pq.department.toLowerCase().includes(searchTerm);
+            const matchesDepartment = selectedDepartment === '' || pq.department === selectedDepartment;
+            const matchesLevel = selectedLevel === '' || pq.level === selectedLevel;
+            const matchesSemester = selectedSemester === '' || pq.semester === selectedSemester;
+            const matchesYear = selectedYear === '' || pq.year == selectedYear;
+            return matchesSearch && matchesDepartment && matchesLevel && matchesSemester && matchesYear;
+        });
+
+        if (filteredPQs.length > 0) {
+            filteredPQs.forEach(renderPastQuestionCard);
+            if (noPastQuestionsFound) noPastQuestionsFound.style.display = 'none';
+        } else {
+            if (noPastQuestionsFound) noPastQuestionsFound.style.display = 'block';
+        }
+    };
+
+    try {
+        if (isSupabaseInitialized) {
+            if (loadingIndicator) loadingIndicator.style.display = 'block';
+            const fetchedPQs = await getMaterialsFromSupabase(SUPABASE_PAST_QUESTIONS_TABLE);
+            console.log('Fetched past questions:', fetchedPQs);
+            if (fetchedPQs && fetchedPQs.length > 0) {
+                fetchedPQs.forEach((pq, index) => {
+                    console.log(`Past Question ${index + 1}:`, {
+                        id: pq.id,
+                        title: pq.title,
+                        download_path: pq.download_path
+                    });
+                });
+                allPastQuestions = fetchedPQs.map(pq => ({
+                    ...pq,
+                    download_path: pq.download_path || ''
+                }));
+                console.log('Processed past questions:', allPastQuestions);
             } else {
-                if (noMaterialsFound) noMaterialsFound.style.display = 'block';
-            }
-        };
-
-        if (materialsGrid) {
-            populateDepartmentFilter();
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const departmentFromUrl = urlParams.get('department');
-            if (departmentFromUrl && departmentFilterSelect) {
-                departmentFilterSelect.value = departmentFromUrl;
-            }
-
-            if (materialsSearchInput && !materialsSearchInput.dataset.hasKeyListener) {
-                materialsSearchInput.addEventListener('keyup', displayMaterials);
-                materialsSearchInput.dataset.hasKeyListener = 'true';
-            }
-            if (departmentFilterSelect && !departmentFilterSelect.dataset.hasChangeListener) {
-                departmentFilterSelect.addEventListener('change', displayMaterials);
-                departmentFilterSelect.dataset.hasChangeListener = 'true';
-            }
-            if (levelFilterSelect && !levelFilterSelect.dataset.hasChangeListener) {
-                levelFilterSelect.addEventListener('change', displayMaterials);
-                levelFilterSelect.dataset.hasChangeListener = 'true';
-            }
-            if (semesterFilterSelect && !semesterFilterSelect.dataset.hasChangeListener) {
-                semesterFilterSelect.addEventListener('change', displayMaterials);
-                semesterFilterSelect.dataset.hasChangeListener = 'true';
-            }
-
-            displayMaterials();
-        } else {
-            console.warn("'.materials-grid' element not found on all-materials.html. Material cards will not load.");
-        }
-    };
-
-    // --- Past Questions Listing Page Logic ---
-    const initializePastQuestionsPage = () => {
-        const pastQuestionsGrid = document.getElementById('past-questions-grid');
-        console.log('pastQuestionsGrid element:', pastQuestionsGrid);
-
-        const pqSearchInput = document.getElementById('past-questions-search-input');
-        const noPastQuestionsFound = document.getElementById('no-past-questions-found');
-        const pqDepartmentFilterSelect = document.getElementById('pq-department-filter');
-        const pqLevelFilterSelect = document.getElementById('pq-level-filter');
-        const pqSemesterFilterSelect = document.getElementById('pq-semester-filter');
-        const pqYearFilterSelect = document.getElementById('pq-year-filter');
-
-        const renderPastQuestionCard = (pq) => {
-            if (!pastQuestionsGrid) return;
-            console.log('Rendering card for:', pq.id);
-            const pqCard = document.createElement('div');
-            pqCard.classList.add('material-card'); // Re-using material-card style
-            pqCard.innerHTML = `
-                <h3>${pq.title} (${pq.id})</h3>
-                <p>${pq.department} Department</p>
-                <div class="material-meta">
-                    <span><i class="fas fa-layer-group"></i> ${pq.level}</span>
-                    <span><i class="fas fa-calendar-alt"></i> ${pq.semester}</span>
-                    <span><i class="fas fa-calendar-check"></i> ${pq.year}</span>
-                </div>
-                <a href="${pq.downloadLink}" class="btn-download" download>
-                    <i class="fas fa-download"></i> Download
-                </a>
-            `;
-            pastQuestionsGrid.appendChild(pqCard);
-        };
-
-        const populatePQFilters = () => {
-            if (pqDepartmentFilterSelect) {
-                const uniqueDepartments = [...new Set(pastQuestionsData.map(pq => pq.department))].sort();
-                while (pqDepartmentFilterSelect.options.length > 1) {
-                    pqDepartmentFilterSelect.remove(1);
+                console.warn("Bucket is empty or failed to fetch past questions.");
+                allPastQuestions = [];
+                if (noPastQuestionsFound) {
+                    noPastQuestionsFound.textContent = "Bucket is empty or failed to fetch past questions.";
+                    noPastQuestionsFound.style.display = 'block';
                 }
-                uniqueDepartments.forEach(dept => {
-                    const option = document.createElement('option');
-                    option.value = dept;
-                    option.textContent = dept;
-                    pqDepartmentFilterSelect.appendChild(option);
-                });
-            }
-
-            if (pqYearFilterSelect) {
-                const uniqueYears = [...new Set(pastQuestionsData.map(pq => pq.year))].sort((a, b) => b - a); // Sort descending
-                while (pqYearFilterSelect.options.length > 1) {
-                    pqYearFilterSelect.remove(1);
-                }
-                uniqueYears.forEach(year => {
-                    const option = document.createElement('option');
-                    option.value = year;
-                    option.textContent = year;
-                    pqYearFilterSelect.appendChild(option);
-                });
-            }
-        };
-
-        const displayPastQuestions = () => {
-            if (!pastQuestionsGrid) return;
-
-            pastQuestionsGrid.innerHTML = '';
-            const searchTerm = pqSearchInput ? pqSearchInput.value.toLowerCase().trim() : '';
-            const selectedDepartment = pqDepartmentFilterSelect ? pqDepartmentFilterSelect.value : '';
-            const selectedLevel = pqLevelFilterSelect ? pqLevelFilterSelect.value : '';
-            const selectedSemester = pqSemesterFilterSelect ? pqSemesterFilterSelect.value : '';
-
-            const selectedYearStr = pqYearFilterSelect ? pqYearFilterSelect.value : '';
-            const yearFilterValue = selectedYearStr === '' ? '' : parseInt(selectedYearStr);
-
-            const filteredPastQuestions = pastQuestionsData.filter(pq => {
-                const matchesSearch = pq.title.toLowerCase().includes(searchTerm) ||
-                                      pq.id.toLowerCase().includes(searchTerm) ||
-                                      pq.department.toLowerCase().includes(searchTerm) ||
-                                      String(pq.year).includes(searchTerm);
-
-                const matchesDepartment = selectedDepartment === '' || pq.department === selectedDepartment;
-                const matchesLevel = selectedLevel === '' || pq.level === selectedLevel;
-                const matchesSemester = selectedSemester === '' || pq.semester === selectedSemester;
-                const matchesYear = yearFilterValue === '' || pq.year === yearFilterValue;
-
-                return matchesSearch && matchesDepartment && matchesLevel && matchesSemester && matchesYear;
-            });
-
-            console.log('Filtered past questions:', filteredPastQuestions.length, 'items');
-
-
-            if (filteredPastQuestions.length > 0) {
-                filteredPastQuestions.forEach(renderPastQuestionCard);
-                if (noPastQuestionsFound) noPastQuestionsFound.style.display = 'none';
-            } else {
-                if (noPastQuestionsFound) noPastQuestionsFound.style.display = 'block';
-            }
-        };
-
-        if (pastQuestionsGrid) {
-            populatePQFilters();
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const departmentFromUrl = urlParams.get('department');
-            if (departmentFromUrl && pqDepartmentFilterSelect) {
-                pqDepartmentFilterSelect.value = departmentFromUrl;
-            }
-
-            // Event Listeners
-            if (pqSearchInput && !pqSearchInput.dataset.hasKeyListener) {
-                pqSearchInput.addEventListener('keyup', displayPastQuestions);
-                pqSearchInput.dataset.hasKeyListener = 'true';
-            }
-            if (pqDepartmentFilterSelect && !pqDepartmentFilterSelect.dataset.hasChangeListener) {
-                pqDepartmentFilterSelect.addEventListener('change', displayPastQuestions);
-                pqDepartmentFilterSelect.dataset.hasChangeListener = 'true';
-            }
-            if (pqLevelFilterSelect && !pqLevelFilterSelect.dataset.hasChangeListener) {
-                pqLevelFilterSelect.addEventListener('change', displayPastQuestions);
-                pqLevelFilterSelect.dataset.hasChangeListener = 'true';
-            }
-            if (pqSemesterFilterSelect && !pqSemesterFilterSelect.dataset.hasChangeListener) {
-                pqSemesterFilterSelect.addEventListener('change', displayPastQuestions);
-                pqSemesterFilterSelect.dataset.hasChangeListener = 'true';
-            }
-            if (pqYearFilterSelect && !pqYearFilterSelect.dataset.hasChangeListener) {
-                pqYearFilterSelect.addEventListener('change', displayPastQuestions);
-                pqYearFilterSelect.dataset.hasChangeListener = 'true';
-            }
-
-            displayPastQuestions(); // Initial display
-        } else {
-            console.warn("'.past-questions-grid' element not found on past-questions.html. Past question cards will not load.");
-        }
-    };
-
-    // --- Contact Page Specific Logic (only runs on contact.html) ---
-    const initializeContactPage = () => {
-        const contactForm = document.getElementById('contact-form');
-        const messageSentPopupOverlay = document.getElementById('message-sent-popup-overlay');
-        const messageSentPopupCloseBtn = document.getElementById('message-sent-popup-close');
-
-        if (contactForm) {
-            if (!contactForm.dataset.hasSubmitListener) { // Prevent multiple listeners
-                contactForm.addEventListener('submit', (event) => {
-                    event.preventDefault(); // Prevent default form submission
-
-                    // Simulate form submission (e.g., an AJAX request to a backend)
-                    // In a real application, you would send data to a server here using fetch() or XMLHttpRequest
-                    console.log('Simulating form submission...');
-                    const formData = new FormData(contactForm);
-                    for (let [key, value] of formData.entries()) {
-                        console.log(`${key}: ${value}`);
-                    }
-
-                    // Show a loader or disable button while submitting (optional)
-                    const submitButton = contactForm.querySelector('button[type="submit"]');
-                    const originalButtonText = submitButton.innerHTML;
-                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-                    submitButton.disabled = true;
-
-                    setTimeout(() => {
-                        // After successful (simulated) submission:
-                        contactForm.reset(); // Clear the form
-                        if (messageSentPopupOverlay) {
-                            messageSentPopupOverlay.classList.add('show'); // Show the success popup
-                        }
-
-                        // Restore button state
-                        submitButton.innerHTML = originalButtonText;
-                        submitButton.disabled = false;
-
-                        console.log('Message sent successfully!');
-                    }, 2000); // Simulate a 2-second delay for submission
-                });
-                contactForm.dataset.hasSubmitListener = 'true';
             }
         } else {
-            console.warn("'#contact-form' element not found on contact.html. Form submission will not be handled by JS.");
-        }
-
-        if (messageSentPopupCloseBtn && messageSentPopupOverlay) {
-            if (!messageSentPopupCloseBtn.dataset.hasClickListener) {
-                messageSentPopupCloseBtn.addEventListener('click', () => {
-                    messageSentPopupOverlay.classList.remove('show');
-                });
-                messageSentPopupCloseBtn.dataset.hasClickListener = 'true';
+            console.warn("Supabase not initialized for past questions page. Please ensure keys are correct.");
+            allPastQuestions = [];
+            if (noPastQuestionsFound) {
+                noPastQuestionsFound.textContent = "Data not loaded: Supabase initialization failed. Check console for details.";
+                noPastQuestionsFound.style.display = 'block';
             }
         }
-    };
+    } catch (error) {
+        console.error("Error setting up past questions page:", error);
+        allPastQuestions = [];
+        if (noPastQuestionsFound) {
+            noPastQuestionsFound.textContent = "An error occurred loading past questions.";
+            noPastQuestionsFound.style.display = 'block';
+        }
+    } finally {
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+    }
+
+    populateFilters(allPastQuestions);
+    if (pqSearchInput) pqSearchInput.addEventListener('keyup', displayPastQuestions);
+    if (pqDepartmentFilter) pqDepartmentFilter.addEventListener('change', displayPastQuestions);
+    if (pqLevelFilter) pqLevelFilter.addEventListener('change', displayPastQuestions);
+    if (pqSemesterFilter) pqSemesterFilter.addEventListener('change', displayPastQuestions);
+    if (pqYearFilter) pqYearFilter.addEventListener('change', displayPastQuestions);
+
+    displayPastQuestions();
+}
 
 
-    // --- Main execution flow ---
-    // --- Main execution flow ---
+
+
+// Initialize when DOM loads
+document.addEventListener('DOMContentLoaded', () => {
+    // Add viewport meta tag if missing
+    if (!document.querySelector('meta[name="viewport"]')) {
+        const meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, initial-scale=1.0';
+        document.head.appendChild(meta);
+    }
+    
+  
+});
+
+// --- Main Entry Point ---
+document.addEventListener('DOMContentLoaded', () => {
     loadPartials().then(() => {
         const currentPath = window.location.pathname;
 
+        setMainContentPadding();
+        setupHamburgerMenu();
+
         if (currentPath.endsWith('/') || currentPath.endsWith('/index.html')) {
-            initializeHomepage();
+            console.log('Running setupDepartmentsPage for index.html.');
+            setupDepartmentsPage();
         } else if (currentPath.includes('all-materials.html')) {
-            initializeAllMaterialsPage();
+            console.log('Running setupMaterialsPage for all-materials.html.');
+            setupMaterialsPage();
         } else if (currentPath.includes('past-questions.html')) {
-            console.log('Initializing Past Questions Page');
-            initializePastQuestionsPage();
-        } else if (currentPath.includes('contact.html')) { // NEW LINE: Initialize Contact Page
-            console.log('Initializing Contact Page');
-            initializeContactPage();
+            console.log('Running setupPastQuestionsPage for past-questions.html.');
+            setupPastQuestionsPage();
+        
         }
-        // No specific initialization functions needed for about.html
-        // as their content is static and general page features handle them.
     }).catch(error => {
         console.error("Failed to load partials or initialize page:", error);
     });
 
+    
 });

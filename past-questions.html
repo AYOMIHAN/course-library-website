@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Past Questions - Course Library</title>
-        <meta name="description" content="Explore a curated collection of free course materials, notes, and resources from the Federal University of Technology Akure (FUTA).">
+    <meta name="description" content="Explore a curated collection of free course materials, notes, and resources from the Federal University of Technology Akure (FUTA).">
     <meta name="keywords" content="FUTA, course materials, educational resources, free
     notes, FUTA departments, academic resources, university courses, study materials">
     <meta name="author" content="Course Library">
@@ -21,12 +21,14 @@
     from the Federal University of Technology Akure (FUTA).">
     <meta name="twitter:image" content="img/og-image.png">
     <meta name="robots" content="index, follow">
-    <link rel="stylesheet" href="css/styles.css">
-<link rel="icon" href="img/favicon-48x48.png" sizes="48x48" type="image/png">
+    <link rel="icon" href="img/favicon-48x48.png" sizes="48x48" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/scripts.js" defer></script>
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -40,7 +42,7 @@
                 <div class="past-questions-filters">
                     <select id="pq-department-filter" class="filter-select">
                         <option value="">All Departments</option>
-                        </select>
+                    </select>
                     <select id="pq-level-filter" class="filter-select">
                         <option value="">All Levels</option>
                         <option value="100L">100 Level</option>
@@ -51,19 +53,20 @@
                     </select>
                     <select id="pq-semester-filter" class="filter-select">
                         <option value="">All Semesters</option>
-                        <option value="1st Semester">1st Semester</option>
-                        <option value="2nd Semester">2nd Semester</option>
+                        <option value="First Semester">1st Semester</option>
+                        <option value="Second Semester">2nd Semester</option>
                     </select>
                     <select id="pq-year-filter" class="filter-select">
                         <option value="">All Years</option>
-                        </select>
+                    </select>
                 </div>
             </div>
 
-           <div id="past-questions-grid" class="past-questions-grid">
-        </div>
+            <div id="past-questions-grid" class="past-questions-grid">
+                <p id="past-questions-loading-indicator" style="display: none; text-align: center;">Loading past questions...</p>
+            </div>
 
-    <p id="no-past-questions-found" class="no-results" style="display: none;">No past questions found matching your criteria.</p>
+            <p id="no-past-questions-found" class="no-results" style="display: none;">No past questions found matching your criteria.</p>
 
         </section>
     </main>
@@ -75,14 +78,14 @@
     </button>
 
     <div id="download-popup-overlay" class="download-popup-overlay">
-        <div class="download-popup-content">
-            <h3>Download Started!</h3>
-            <p>Your download should begin shortly. Happy studying!</p>
-            <p>Remember to share this website with your friends and colleagues!</p>
-            <button id="download-popup-close" class="btn">Close</button>
+    <div class="download-popup-content">
+        <h3 id="popup-title">Download Started</h3>
+        <p id="popup-message">Your file download should begin shortly.</p>
+        <div id="popup-buttons">
+            <button id="download-popup-close" class="popup-btn">Close</button>
+            <button id="download-popup-retry" class="popup-btn" style="display: none;">Try Again</button>
         </div>
     </div>
-
-<script src="js/scripts.js"></script>
-<script src="js/supabaseMaterials.js" type="module"></script></body>
+</div>
+</body>
 </html>

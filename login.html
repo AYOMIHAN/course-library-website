@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Required</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-main); /* Using your defined CSS variable */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .login-container {
+            background-color: var(--bg-white); /* Using your defined CSS variable */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-card); /* Using your defined CSS variable */
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        .login-container h2 {
+            color: var(--text-dark); /* Using your defined CSS variable */
+            margin-bottom: 20px;
+        }
+        .login-container input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-light); /* Using your defined CSS variable */
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .login-container button {
+            background-color: var(--primary-blue); /* Using your defined CSS variable */
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+        .login-container button:hover {
+            background-color: var(--hover-blue); /* Using your defined CSS variable */
+        }
+        .error-message {
+            color: red;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Enter Matric Number to Access</h2>
+        <p>Please enter your matric number to access the Course Library.</p>
+        <p class="note">Note: This is a test version. Access is restricted to specific users.</p>
+        <p class="note">For testing purposes, use the matric number: <strong>
+        <input type="text" id="matricInput" placeholder="Enter your matric number">
+        <button id="accessButton">Access Site</button>
+        <p id="errorMessage" class="error-message">Incorrect matric number. Please try again.</p>
+    </div>
+
+    <script src="js/login-check.js"></script> </body>
+</html>

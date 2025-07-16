@@ -21,15 +21,18 @@
     from the Federal University of Technology Akure (FUTA).">
     <meta name="twitter:image" content="img/og-image.png">
     <meta name="robots" content="index, follow">
-    <link rel="stylesheet" href="css/styles.css">
-<link rel="icon" href="img/favicon-48x48.png" sizes="48x48" type="image/png">
+    <link rel="icon" href="img/favicon-48x48.png" sizes="48x48" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/supabase.js"></script>
 </head>
 <body>
-<div id="header-placeholder"></div>
+    <div id="header-placeholder"></div>
 
     <main>
         <section id="hero" class="hero-section">
@@ -49,7 +52,6 @@
             </div>
         </section>
 
-
         <section id="departments" class="departments-section">
             <div class="container">
                 <h2>Federal University of Technology Akure (FUTA) Departments</h2>
@@ -57,8 +59,10 @@
                     <input type="text" id="department-search-input" placeholder="Search departments...">
                 </div>
                 <div class="department-grid">
-                    </div>
-                <button id="load-more-departments" class="btn btn-outline-departments">Load More Departments</button>
+                    <p id="departments-loading-indicator" style="display: none; text-align: center;">Loading departments...</p>
+                    <p id="no-departments-found" style="display: none; text-align: center; color: #cc0000;">No departments found or an error occurred.</p>
+                </div>
+                <button id="load-more-departments" class="btn btn-outline-departments" style="display: none;">Load More Departments</button>
             </div>
         </section>
     </main>
@@ -69,7 +73,6 @@
         <i class="fas fa-arrow-up"></i>
     </button>
 
-<script src="js/scripts.js"></script>
-<script src="js/supabaseMaterials.js" type="module"></script>
+    <script type="module" src="js/scripts.js" defer></script>
 </body>
 </html>
